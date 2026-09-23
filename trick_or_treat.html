@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRICK or TREAT不給糖就搗蛋</title>
+    <!-- 引入傳統明體，增加復古東方恐怖感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* 更驚悚暗沉的復古色票 */
+            --bg-wood: #0a0503;        /* 接近黑色的腐木 */
+            --paper-main: #c2a180;     /* 更暗沉的舊紙張 */
+            --paper-dark: #826244;     /* 舊紙張深色霉斑 */
+            --ink: #140a05;            /* 極深血褐色/黑墨 */
+            --blood: #8a0303;          /* 乾涸的暗血紅 */
+            --blood-light: #b30000;    /* 亮血紅 */
+            --success: #1b4d24;        /* 復古綠 (答對) */
+        }
+
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background-color: var(--bg-wood);
+            /* 加上血紅微光與更深的黑暗邊緣 */
+            background-image: 
+                radial-gradient(circle at center, rgba(138,3,3,0.05) 0%, rgba(0,0,0,0.95) 100%),
+                repeating-linear-gradient(45deg, #120905 0px, #120905 2px, #0a0503 2px, #0a0503 4px);
+            background-attachment: fixed;
+            color: var(--ink);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            /* 驚悚呼吸燈效果 */
+            animation: spooky-breathe 6s infinite alternate ease-in-out;
+        }
+
+        @keyframes spooky-breathe {
+            0% { box-shadow: inset 0 0 50px rgba(0,0,0,0.8); }
+            100% { box-shadow: inset 0 0 150px rgba(138,3,3,0.4); }
+        }
+
+        /* 自訂復古捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-wood); }
+        ::-webkit-scrollbar-thumb { background: var(--ink); border: 1px solid var(--paper-dark); }
+
+        /* 復古羊皮紙面板設計 */
+        .vintage-panel {
+            background-color: var(--paper-main);
+            /* 加入類似血跡與更深陰影的漸層 */
+            background-image: 
+                radial-gradient(circle at center, transparent 30%, rgba(50, 20, 10, 0.4) 100%),
+                radial-gradient(circle at top left, rgba(138,3,3,0.1) 0%, transparent 25%),
+                radial-gradient(circle at bottom right, rgba(138,3,3,0.15) 0%, transparent 30%),
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 3px);
+            border: 3px solid var(--ink);
+            position: relative;
+            box-shadow: 8px 8px 25px rgba(0, 0, 0, 0.85), inset 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* 內側雙層裝飾線 */
+        .vintage-panel::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 1px solid rgba(43, 26, 16, 0.4);
+            pointer-events: none;
+        }
+
+        /* 選單卡片特效 */
+        .menu-card {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(139, 0, 0, 0.15);
+            border-color: var(--blood);
+        }
+
+        /* 復古立體按鈕 */
+        .vintage-btn {
+            background-color: var(--ink);
+            color: var(--paper-main);
+            border: 2px solid #000;
+            box-shadow: 4px 4px 0 var(--blood);
+            transition: all 0.15s ease-in-out;
+            font-weight: bold;
+        }
+        .vintage-btn:hover {
+            background-color: var(--blood);
+            box-shadow: 4px 4px 0 var(--ink);
+            transform: translate(-2px, -2px);
+        }
+        .vintage-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0 0 0 var(--ink);
+        }
+
+        /* typography utilities */
+        .blood-text { 
+            color: var(--blood); 
+            font-weight: 900; 
+            text-shadow: 2px 2px 3px rgba(0,0,0,0.6), 0 0 12px rgba(138,3,3,0.5); 
+        }
+        .ink-text { color: var(--ink); font-weight: 900; }
+
+        /* --- Game 1: 女巫抽抽樂 (調整比例以容納精美插圖) --- */
+        .cards-container {
+            position: relative;
+            height: clamp(180px, 50vw, 240px);
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            perspective: 1200px;
+        }
+
+        .playing-card {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(100px, 28vw, 135px);
+            height: clamp(170px, 48vw, 230px);
+            transition: left 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            left: 50%; /* JS overrides */
+        }
+
+        .playing-card-inner {
+            position: relative; width: 100%; height: 100%;
+            text-align: center; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.6);
+            border-radius: 8px;
+        }
+
+        .playing-card.is-flipped .playing-card-inner { transform: rotateY(180deg); }
+
+        .playing-card-front, .playing-card-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border-radius: 8px; border: 2px solid var(--ink);
+            overflow: hidden;
+        }
+
+        /* 牌背設計：復古符咒感 */
+        .playing-card-front {
+            background-color: var(--ink);
+            background-image: repeating-linear-gradient(45deg, #3d1c0a, #3d1c0a 10px, #2b1306 10px, #2b1306 20px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .playing-card-front::after {
+            content: "封";
+            font-size: 3rem; color: var(--blood);
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+            border: 3px solid var(--blood); border-radius: 50%; width: 70px; height: 70px;
+            display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);
+        }
+
+        .playing-card-back { background: var(--paper-main); transform: rotateY(180deg); }
+        .card-image { width: 100%; height: 100%; object-fit: cover; display: block; filter: sepia(0.2) contrast(1.1); }
+
+        .highlight-card .playing-card-inner {
+            box-shadow: 0 0 20px 8px var(--blood);
+            animation: pulse-glow-vintage 1.5s infinite;
+        }
+
+        @keyframes pulse-glow-vintage {
+            0%, 100% { box-shadow: 0 0 15px 2px var(--blood); }
+            50% { box-shadow: 0 0 30px 8px rgba(139, 0, 0, 0.8); }
+        }
+
+        /* 答對與答錯邊框顏色 */
+        .anim-success .playing-card-inner { box-shadow: 0 0 25px 8px #1b4d24; }
+        .anim-fail .playing-card-inner { box-shadow: 0 0 25px 8px #000; }
+
+        /* --- Game 2: 魅大魅小 --- */
+        .poker-slot { width: clamp(75px, 22vw, 110px); aspect-ratio: 2.5/3.5; perspective: 1000px; }
+        .poker-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d; box-shadow: 4px 4px 10px rgba(0,0,0,0.6);
+        }
+        .poker-card-inner.is-flipped { transform: rotateY(180deg); }
+        .poker-front, .poker-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border: 2px solid var(--ink);
+        }
+        .poker-back {
+            background-color: #5c1818;
+            background-image: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.4) 100%), repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 5px, transparent 5px, transparent 10px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .poker-back::after { content: "魅"; font-size: 2rem; color: var(--paper-main); font-weight: 900; opacity: 0.8;}
+        .poker-front {
+            background-color: var(--paper-main); background-image: radial-gradient(circle, transparent 40%, rgba(139, 69, 19, 0.1) 100%);
+            transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: space-between; padding: 5px;
+        }
+        .poker-corner { font-size: clamp(0.9rem, 3.5vw, 1.3rem); font-weight: 900; line-height: 1; }
+        .poker-corner.bottom { text-align: right; transform: rotate(180deg); }
+        .poker-center { font-size: clamp(2rem, 7vw, 3rem); align-self: center; }
+        .red-suit { color: var(--blood); } .black-suit { color: var(--ink); }
+
+        .card-spread { display: flex; flex-wrap: wrap; justify-content: center; padding: 15px; gap: 6px 0; }
+        .spread-card {
+            width: clamp(32px, 9vw, 45px); aspect-ratio: 2.5/3.5; margin-right: -18px;
+            background-color: #5c1818; border: 1px solid #2b1a10; box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .spread-card:hover { transform: translateY(-12px) rotate(-2deg); z-index: 10; box-shadow: 0 10px 15px rgba(0,0,0,0.7); border-color: var(--paper-main); }
+        @media (max-width: 600px) { .spread-card { margin-right: -12px; } }
+        .spread-card:last-child { margin-right: 0; }
+
+        /* --- Game 3: 鬼才知道 --- */
+        .g3-card-container { width: 100%; aspect-ratio: 2.5/3.5; perspective: 1000px; }
+        .g3-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d; cursor: pointer;
+        }
+        .g3-card-inner.is-flipped { transform: rotateY(180deg); }
+        .g3-card-front, .g3-card-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border: 2px solid var(--ink); box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+        }
+        .g3-card-front {
+            background-color: var(--ink); background-image: radial-gradient(circle, #4a2d1d 0%, var(--ink) 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .g3-card-front::after { content: '？'; font-size: 3rem; color: var(--blood); font-weight: 900; }
+        .g3-card-front:hover { box-shadow: 0 0 15px var(--blood); transform: scale(1.03); transition: all 0.3s; }
+        .g3-card-back {
+            background-color: var(--paper-main); transform: rotateY(180deg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink);
+        }
+        .g3-card-drawn { opacity: 0.4; pointer-events: none; transform: scale(0.95); }
+        .q-list-container { max-height: 40vh; overflow-y: auto; }
+
+        /* --- Game 4: 魔仿鬼 --- */
+        .g4-card-container { perspective: 1000px; width: clamp(200px, 60vw, 280px); aspect-ratio: 2/3; }
+        .g4-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d;
+        }
+        .g4-card-inner.is-flipped { transform: rotateY(180deg); }
+        .g4-card-front, .g4-card-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border: 4px solid var(--ink); box-shadow: 8px 8px 20px rgba(0,0,0,0.6);
+        }
+        .g4-card-front {
+            background-color: #311d12;
+            background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 15px, transparent 15px, transparent 30px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: clamp(3rem, 10vw, 5rem); color: var(--paper-dark);
+        }
+        .g4-card-back {
+            background: var(--paper-main); border-color: var(--blood);
+            transform: rotateY(180deg); overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+
+        @keyframes g4-rapid-deck-shuffle {
+            0% { transform: translate(0, 0) rotate(0deg); box-shadow: 0 0 0 rgba(0,0,0,0); }
+            15% { transform: translate(-15px, -5px) rotate(-5deg); box-shadow: 15px 5px 0 #5c1818, 30px 10px 0 var(--ink); }
+            30% { transform: translate(15px, 5px) rotate(5deg); box-shadow: -15px -5px 0 #5c1818, -30px -10px 0 var(--ink); }
+            45% { transform: translate(-20px, 0) rotate(-2deg); box-shadow: 20px 0 0 #5c1818, 40px 0 0 var(--ink); }
+            60% { transform: translate(20px, 0) rotate(2deg); box-shadow: -20px 0 0 #5c1818, -40px 0 0 var(--ink); }
+            75% { transform: translate(-10px, 5px) rotate(-3deg); box-shadow: 10px -5px 0 #5c1818, 20px -10px 0 var(--ink); }
+            90% { transform: translate(10px, -5px) rotate(3deg); box-shadow: -10px 5px 0 #5c1818, -20px 10px 0 var(--ink); }
+            100% { transform: translate(0, 0) rotate(0deg); box-shadow: 8px 8px 20px rgba(0,0,0,0.6); }
+        }
+        .g4-shuffle-anim { animation: g4-rapid-deck-shuffle 1s cubic-bezier(0.25, 1, 0.5, 1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <!-- 礁溪老爺 Badge (驚悚版) -->
+    <div class="mt-8 mb-2 px-6 py-2 border-y-4 border-[var(--blood)] text-[var(--blood)] font-black tracking-[0.1em] text-sm md:text-base vintage-panel relative overflow-hidden text-center" style="box-shadow: 5px 5px 15px rgba(0,0,0,0.8);">
+        <div class="absolute inset-0 bg-[var(--blood)] opacity-10 animate-pulse"></div>
+        🩸 礁溪老爺酒店 <span class="ink-text px-1 md:px-2">得天露營體驗區</span> 萬聖節特別活動 🩸
+    </div>
+
+    <!-- 主標題橫幅 -->
+    <header class="w-full max-w-4xl text-center py-6 px-4 relative z-10">
+        <div class="vintage-panel inline-block px-8 py-4 md:px-12 md:py-6 relative">
+            <!-- 驚悚裝飾 -->
+            <div class="absolute -top-4 -left-4 text-4xl md:text-5xl transform -rotate-12 opacity-70 drop-shadow-lg">🕸️</div>
+            <div class="absolute -bottom-3 -right-3 text-3xl md:text-4xl transform rotate-12 opacity-70 drop-shadow-lg">🕷️</div>
+            <div class="absolute top-2 right-4 text-[var(--blood)] opacity-30 text-5xl rotate-45 pointer-events-none">🩸</div>
+            
+            <h1 class="text-3xl md:text-6xl font-black tracking-widest flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 relative z-10">
+                <span class="ink-text leading-tight drop-shadow-md">不給糖就</span>
+                <span class="blood-text text-6xl md:text-8xl leading-tight transform -rotate-2">搗蛋</span>
+            </h1>
+            <p class="mt-3 ink-text font-black tracking-[0.35em] text-xs md:text-base border-t-2 border-[var(--ink)] pt-3 opacity-90 drop-shadow-sm">TRICK OR TREAT</p>
+        </div>
+    </header>
+
+    <!-- 選單視圖 -->
+    <main id="menu-view" class="w-full max-w-4xl flex-1 flex flex-col justify-center px-4 pb-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 p-2">
+            
+            <div onclick="switchView('game1-view'); initGame1();" class="vintage-panel menu-card p-6 md:p-8 flex flex-col items-center justify-center text-center gap-2 aspect-[4/3] sm:aspect-auto">
+                <div class="absolute top-2 left-4 text-5xl md:text-6xl font-black blood-text opacity-90">壹</div>
+                <div class="text-5xl md:text-6xl mt-4 opacity-90">🔮</div>
+                <h2 class="text-2xl md:text-3xl font-black ink-text mt-3 tracking-wider">女巫抽抽樂</h2>
+                <p class="text-sm md:text-base font-bold ink-text opacity-80 mt-1">從三張卡牌中抽中<br>指定的萬聖節圖案。</p>
+            </div>
+
+            <div onclick="switchView('game2-view'); initGame2();" class="vintage-panel menu-card p-6 md:p-8 flex flex-col items-center justify-center text-center gap-2 aspect-[4/3] sm:aspect-auto">
+                <div class="absolute top-2 left-4 text-5xl md:text-6xl font-black blood-text opacity-90">貳</div>
+                <div class="text-5xl md:text-6xl mt-4 opacity-90">🎲</div>
+                <h2 class="text-2xl md:text-3xl font-black ink-text mt-3 tracking-wider">魅大魅小</h2>
+                <p class="text-sm md:text-base font-bold ink-text opacity-80 mt-1">與對手抽牌比大小，<br>一局定勝負。</p>
+            </div>
+
+            <div onclick="switchView('game3-view'); initGame3();" class="vintage-panel menu-card p-6 md:p-8 flex flex-col items-center justify-center text-center gap-2 aspect-[4/3] sm:aspect-auto">
+                <div class="absolute top-2 left-4 text-5xl md:text-6xl font-black blood-text opacity-90">參</div>
+                <div class="text-5xl md:text-6xl mt-4 opacity-90">📜</div>
+                <h2 class="text-2xl md:text-3xl font-black ink-text mt-3 tracking-wider">鬼才知道</h2>
+                <p class="text-sm md:text-base font-bold ink-text opacity-80 mt-1">抽牌進行問答，<br>答對兩題萬聖節趣味題目。</p>
+            </div>
+
+            <div onclick="switchView('game4-view'); initGame4();" class="vintage-panel menu-card p-6 md:p-8 flex flex-col items-center justify-center text-center gap-2 aspect-[4/3] sm:aspect-auto">
+                <div class="absolute top-2 left-4 text-5xl md:text-6xl font-black blood-text opacity-90">肆</div>
+                <div class="text-5xl md:text-6xl mt-4 opacity-90">📸</div>
+                <h2 class="text-2xl md:text-3xl font-black ink-text mt-3 tracking-wider">魔仿鬼</h2>
+                <p class="text-sm md:text-base font-bold ink-text opacity-80 mt-1">觀察抽出的照片，<br>並模仿照片中的搞怪動作。</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Game 1: 女巫抽抽樂 -->
+    <main id="game1-view" class="w-full max-w-4xl flex-1 hidden flex-col items-center px-4 pb-12">
+        <div class="w-full flex justify-between items-center mb-6 mt-4">
+            <button onclick="switchView('menu-view')" class="vintage-btn px-4 py-2 rounded-md flex items-center gap-2 text-sm md:text-base">
+                <span>&larr;</span> <span>返回</span>
+            </button>
+            <h2 class="text-2xl md:text-3xl font-black blood-text tracking-widest">女巫抽抽樂</h2>
+            <div class="w-20 md:w-24"></div>
+        </div>
+
+        <div class="vintage-panel w-full max-w-2xl px-4 py-3 mb-8 text-center">
+            <div id="game1-status-text" class="text-xl md:text-2xl font-black ink-text tracking-wide">
+                準備好開始了嗎？
+            </div>
+        </div>
+
+        <div class="cards-container mb-12" id="cards-container"></div>
+
+        <div id="game1-controls" class="flex flex-col items-center gap-4 w-full">
+            <button id="btn-start-g1" onclick="startG1Sequence()" class="vintage-btn px-10 py-4 rounded text-xl md:text-2xl tracking-widest">
+                開始遊戲
+            </button>
+            <div id="guess-buttons" class="hidden flex-wrap justify-center gap-4 w-full max-w-lg"></div>
+        </div>
+    </main>
+
+    <!-- Game 2: 魅大魅小 -->
+    <main id="game2-view" class="w-full max-w-4xl flex-1 hidden flex-col items-center px-4 pb-12">
+        <div class="w-full flex justify-between items-center mb-6 mt-4">
+            <button onclick="switchView('menu-view')" class="vintage-btn px-4 py-2 rounded-md flex items-center gap-2 text-sm md:text-base">
+                <span>&larr;</span> <span>返回</span>
+            </button>
+            <h2 class="text-2xl md:text-3xl font-black blood-text tracking-widest">魅大魅小</h2>
+            <div class="w-20 md:w-24"></div>
+        </div>
+
+        <div class="vintage-panel w-full max-w-2xl px-4 py-3 mb-6 text-center">
+            <div id="game2-status-text" class="text-xl md:text-2xl font-black blood-text tracking-wide">
+                請「前者」從下方牌堆抽一張牌
+            </div>
+        </div>
+
+        <div class="w-full max-w-2xl vintage-panel p-6 md:p-8 flex flex-col items-center justify-center gap-6 mb-6">
+            <div class="flex w-full justify-around items-center">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="ink-text font-black text-sm md:text-lg border-2 border-[#2b1a10] px-5 py-1.5 bg-[#c09e7c] shadow-inner">前者</div>
+                    <div class="poker-slot" id="g2-slot-1">
+                        <div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>
+                    </div>
+                </div>
+                <div class="text-3xl md:text-5xl font-black blood-text opacity-70 italic px-2">VS</div>
+                <div class="flex flex-col items-center gap-3">
+                    <div class="ink-text font-black text-sm md:text-lg border-2 border-[#2b1a10] px-5 py-1.5 bg-[#c09e7c] shadow-inner">後者</div>
+                    <div class="poker-slot" id="g2-slot-2">
+                        <div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="h-12 flex items-center justify-center w-full mt-2">
+                <button id="btn-next-g2" onclick="nextRoundG2()" class="hidden vintage-btn px-8 py-3 rounded tracking-widest">下一局</button>
+                <button id="btn-reset-g2" onclick="initGame2()" class="hidden px-8 py-3 bg-[#1e130c] text-[#dcbfa6] border-2 border-[#dcbfa6] font-bold rounded shadow-lg transform transition hover:-translate-y-1 active:scale-95">牌抽完了！重新洗牌</button>
+            </div>
+        </div>
+
+        <div class="w-full flex flex-col items-center mb-4">
+            <div class="text-sm font-bold ink-text tracking-widest mb-3 px-4 py-1 border-b-2 border-[#2b1a10]">
+                剩餘牌堆數量: <span id="g2-deck-count" class="blood-text text-lg">52</span>
+            </div>
+            <div id="g2-card-pool" class="card-spread w-full max-w-3xl vintage-panel"></div>
+        </div>
+    </main>
+
+    <!-- Game 3: 鬼才知道 -->
+    <main id="game3-view" class="w-full max-w-4xl flex-1 hidden flex-col items-center px-4 pb-12">
+        <div class="w-full flex justify-between items-center mb-6 mt-4">
+            <button onclick="switchView('menu-view')" class="vintage-btn px-4 py-2 rounded-md flex items-center gap-2 text-sm md:text-base">
+                <span>&larr;</span> <span>返回</span>
+            </button>
+            <h2 class="text-2xl md:text-3xl font-black blood-text tracking-widest">鬼才知道</h2>
+            <button onclick="openG3Auth()" class="vintage-btn px-3 py-2 rounded-md flex items-center gap-2 text-sm">
+                <span>⚙️</span> <span class="hidden md:inline">編撰題庫</span>
+            </button>
+        </div>
+
+        <div class="vintage-panel w-full max-w-2xl px-4 py-3 mb-6 text-center">
+            <div id="game3-status-text" class="text-xl md:text-2xl font-black ink-text tracking-wide">
+                請抽取 2 張卡片
+            </div>
+        </div>
+
+        <div id="g3-card-grid" class="grid grid-cols-3 gap-3 md:gap-6 w-full max-w-md md:max-w-xl mx-auto mb-8"></div>
+
+        <div id="g3-qa-area" class="hidden w-full max-w-2xl vintage-panel p-6 md:p-10 flex-col items-center">
+            <div class="ink-text font-black tracking-widest text-sm border-b-2 border-black pb-1 mb-4">第 <span id="g3-q-counter" class="blood-text text-lg">1</span> 題</div>
+            <h3 id="g3-q-text" class="text-xl md:text-2xl font-black ink-text mb-8 text-center leading-loose"></h3>
+            <div id="g3-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"></div>
+            <div id="g3-qa-result" class="hidden mt-6 text-xl font-black text-center w-full p-4 border-2"></div>
+            <button id="g3-next-btn" onclick="nextG3Step()" class="hidden mt-8 vintage-btn px-10 py-3 rounded text-lg tracking-widest">繼續</button>
+        </div>
+        
+        <div id="g3-end-area" class="hidden flex-col items-center gap-4 mt-8 vintage-panel p-8 text-center w-full max-w-md mx-auto">
+            <div class="text-6xl mb-2 opacity-90">🎉</div>
+            <h3 class="text-3xl font-black text-[#1b4d24]">恭喜過關！</h3>
+            <p class="ink-text font-bold text-lg">你成功答對了所有抽到的題目！</p>
+            <button onclick="initGame3()" class="mt-6 vintage-btn px-8 py-3 rounded tracking-widest">再玩一次</button>
+        </div>
+    </main>
+
+    <!-- Game 4: 魔仿鬼 -->
+    <main id="game4-view" class="w-full max-w-4xl flex-1 hidden flex-col items-center px-4 pb-12">
+        <div class="w-full flex justify-between items-center mb-6 mt-4">
+            <button onclick="switchView('menu-view')" class="vintage-btn px-4 py-2 rounded-md flex items-center gap-2 text-sm md:text-base">
+                <span>&larr;</span> <span>返回</span>
+            </button>
+            <h2 class="text-2xl md:text-3xl font-black blood-text tracking-widest">魔仿鬼</h2>
+            <div class="w-20 md:w-24"></div>
+        </div>
+
+        <div class="vintage-panel w-full max-w-2xl px-4 py-3 mb-8 text-center">
+            <div id="game4-status-text" class="text-xl md:text-2xl font-black ink-text tracking-wide">
+                準備好模仿了嗎？
+            </div>
+        </div>
+
+        <div class="flex justify-center items-center mb-12 w-full h-[350px] md:h-[450px]">
+            <div class="g4-card-container" id="g4-card-element">
+                <div class="g4-card-inner" id="g4-card-inner">
+                    <div class="g4-card-front">
+                        <span class="mb-2">封</span>
+                        <div class="text-lg font-bold">抽出指定動作</div>
+                    </div>
+                    <div class="g4-card-back flex-col p-2 bg-[#dcbfa6]">
+                        <!-- Photo container with inner vintage border -->
+                        <div class="w-full h-full border-2 border-[#2b1a10] relative overflow-hidden flex flex-col items-center justify-center bg-[#c09e7c]">
+                            <img id="g4-photo" src="" alt="模仿照片" class="w-full h-full object-cover hidden filter contrast-125 sepia-[0.3]">
+                            <div id="g4-photo-fallback" class="p-6 text-center w-full h-full flex flex-col justify-center items-center">
+                                <div class="text-5xl mb-4 text-[#2b1a10]">📸</div>
+                                <div class="text-2xl font-black text-[#2b1a10]" id="g4-photo-name">照片預留區</div>
+                                <div class="text-sm font-bold text-[#2b1a10] mt-4 border-t-2 border-[#2b1a10] pt-2">請將照片放至同資料夾<br>並修改程式碼即可顯示</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center w-full">
+            <button id="btn-start-g4" onclick="startG4Sequence()" class="vintage-btn px-10 py-4 rounded text-xl md:text-2xl tracking-widest">
+                開始洗牌與抽取
+            </button>
+        </div>
+    </main>
+
+    <!-- 題庫密碼驗證 Modal -->
+    <div id="g3-auth-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col items-center justify-center p-4">
+        <div class="vintage-panel p-8 w-full max-w-sm text-center">
+            <h3 class="text-3xl font-black blood-text mb-2">機密題庫</h3>
+            <p class="ink-text font-bold mb-6 text-sm">請輸入解鎖密碼 (預設: 8888)</p>
+            <input type="password" id="g3-pwd-input" class="w-full bg-[#c09e7c] border-2 border-[#2b1a10] text-[#2b1a10] text-center text-3xl py-3 mb-3 focus:outline-none focus:border-blood font-mono tracking-[0.5em] font-bold" placeholder="••••">
+            <div id="g3-auth-error" class="text-[#8b0000] text-sm h-6 mb-3 font-bold"></div>
+            <div class="flex gap-4 justify-center">
+                <button onclick="closeG3Auth()" class="flex-1 py-3 bg-[#c09e7c] border-2 border-[#2b1a10] text-[#2b1a10] font-bold transition hover:bg-[#a68460]">取消</button>
+                <button onclick="verifyG3Auth()" class="flex-1 py-3 vintage-btn">開鎖</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 題庫編輯器 Modal -->
+    <div id="g3-edit-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center p-4 py-8">
+        <div class="vintage-panel p-5 md:p-8 w-full max-w-3xl h-full max-h-[90vh] flex flex-col relative overflow-hidden">
+            <button onclick="closeG3Edit()" class="absolute top-4 right-5 text-[#2b1a10] hover:text-[#8b0000] text-4xl font-bold transition">&times;</button>
+            <h3 class="text-2xl md:text-3xl font-black blood-text mb-5 flex items-center gap-2 border-b-2 border-black pb-3"><span>⚙️</span> 萬聖節題庫編撰錄</h3>
+            
+            <div class="flex-1 q-list-container bg-[#c09e7c] border-2 border-[#2b1a10] p-4 mb-5 inset-shadow">
+                <h4 class="ink-text font-black mb-3 border-b-2 border-[#2b1a10] pb-2 flex justify-between">
+                    <span>現有卷宗</span> <span class="bg-[#2b1a10] text-[#dcbfa6] px-3 py-0.5" id="g3-q-count-display">0</span>
+                </h4>
+                <div id="g3-q-list" class="flex flex-col gap-3"></div>
+            </div>
+
+            <div class="bg-[#c09e7c] p-4 md:p-5 border-2 border-[#2b1a10] flex flex-col gap-3">
+                <h4 class="blood-text font-black text-lg border-b border-[#2b1a10] pb-1">新增謎題</h4>
+                <input type="text" id="g3-new-q" placeholder="請輸入問題內容..." class="w-full bg-[#dcbfa6] border border-[#2b1a10] text-[#2b1a10] px-4 py-2.5 focus:outline-none focus:border-[#8b0000] font-bold">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="flex items-center gap-2"><span class="ink-text font-black">壹</span><input type="text" id="g3-new-opt0" placeholder="選項 1" class="w-full bg-[#dcbfa6] border border-[#2b1a10] px-3 py-2 focus:outline-none focus:border-[#8b0000] font-bold text-sm"></div>
+                    <div class="flex items-center gap-2"><span class="ink-text font-black">貳</span><input type="text" id="g3-new-opt1" placeholder="選項 2" class="w-full bg-[#dcbfa6] border border-[#2b1a10] px-3 py-2 focus:outline-none focus:border-[#8b0000] font-bold text-sm"></div>
+                    <div class="flex items-center gap-2"><span class="ink-text font-black">參</span><input type="text" id="g3-new-opt2" placeholder="選項 3" class="w-full bg-[#dcbfa6] border border-[#2b1a10] px-3 py-2 focus:outline-none focus:border-[#8b0000] font-bold text-sm"></div>
+                    <div class="flex items-center gap-2"><span class="ink-text font-black">肆</span><input type="text" id="g3-new-opt3" placeholder="選項 4" class="w-full bg-[#dcbfa6] border border-[#2b1a10] px-3 py-2 focus:outline-none focus:border-[#8b0000] font-bold text-sm"></div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3 pt-3 border-t border-[#2b1a10]">
+                    <div class="flex items-center gap-3">
+                        <label class="ink-text font-black">正確解答:</label>
+                        <select id="g3-new-ans" class="bg-[#dcbfa6] border border-[#2b1a10] text-[#2b1a10] font-bold px-4 py-2 focus:outline-none focus:border-[#8b0000] cursor-pointer">
+                            <option value="0">選項 壹</option><option value="1">選項 貳</option><option value="2">選項 參</option><option value="3">選項 肆</option>
+                        </select>
+                    </div>
+                    <button onclick="addG3Question()" class="vintage-btn px-8 py-2.5">
+                        + 封印入庫
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾版權 -->
+    <footer class="w-full text-center py-8 mt-6 relative z-10">
+        <p class="ink-text font-black text-sm opacity-70 tracking-widest drop-shadow-sm">© 2026 礁溪老爺酒店 得天露營體驗區</p>
+        <p class="blood-text font-bold text-xs mt-2 opacity-60 tracking-[0.2em]">謹慎遊玩，後果自負...</p>
+    </footer>
+
+    <script>
+        const views = ['menu-view', 'game1-view', 'game2-view', 'game3-view', 'game4-view'];
+        function switchView(targetViewId) {
+            views.forEach(viewId => {
+                const el = document.getElementById(viewId);
+                if (el) {
+                    if (viewId === targetViewId) {
+                        el.classList.remove('hidden'); el.classList.add('flex');
+                    } else {
+                        el.classList.add('hidden'); el.classList.remove('flex');
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        /* =========================================================================
+           Game 1: 女巫抽抽樂
+           ========================================================================= */
+        const G1_TYPES = [
+            { id: 'witch', image: encodeURI('女巫_2.jpg'), name: '女巫' },
+            { id: 'pumpkin', image: encodeURI('台灣民俗萬聖三聯塔羅 карт.jpg'), name: '南瓜' },
+            { id: 'ghost', image: encodeURI('台灣民俗萬聖三聯塔羅-幽靈 карт.jpg'), name: '幽靈' }
+        ];
+        
+        const G1_POSITIONS = ['16%', '50%', '84%']; /* 縮小左右邊距，防止手機超出畫面 */
+        let g1Cards = [], g1TargetSlot = -1, isG1Animating = false;
+
+        function initGame1() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = ''; g1Cards = [];
+            const shuffledTypes = [...G1_TYPES].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 3; i++) {
+                const cardType = shuffledTypes[i];
+                const cardEl = document.createElement('div');
+                cardEl.className = 'playing-card';
+                cardEl.style.left = G1_POSITIONS[i];
+                cardEl.innerHTML = `
+                    <div class="playing-card-inner">
+                        <div class="playing-card-front"></div>
+                        <div class="playing-card-back bg-[#c09e7c] p-1.5 border-2 border-[#2b1a10]">
+                            <img src="${cardType.image}" alt="${cardType.name}" class="card-image border border-[#2b1a10]" loading="lazy" onerror="this.onerror=null; this.outerHTML='<div class=\\'w-full h-full flex items-center justify-center font-black text-2xl ink-text bg-[#dcbfa6]\\'>${cardType.name}</div>';">
+                        </div>
+                    </div>`;
+                container.appendChild(cardEl);
+                g1Cards.push({ id: i, type: cardType, currentSlot: i, element: cardEl });
+            }
+            document.getElementById('btn-start-g1').classList.remove('hidden');
+            document.getElementById('guess-buttons').classList.add('hidden');
+            setG1Status('點擊「開始遊戲」以檢視卡牌', 'ink-text');
+        }
+
+        function setG1Status(text, colorClass = 'ink-text') {
+            const el = document.getElementById('game1-status-text');
+            el.innerText = text;
+            el.className = `text-xl md:text-2xl font-black tracking-wide transition-colors ${colorClass}`;
+        }
+
+        async function startG1Sequence() {
+            if (isG1Animating) return;
+            isG1Animating = true;
+            document.getElementById('btn-start-g1').classList.add('hidden');
+            g1Cards.forEach(c => c.element.classList.remove('highlight-card', 'anim-success', 'anim-fail', 'is-flipped'));
+
+            setG1Status('記住這些卡牌的位置！', 'blood-text');
+            g1Cards.forEach(c => c.element.classList.add('is-flipped'));
+            await sleep(2500);
+
+            setG1Status('要開始洗牌囉...', 'ink-text');
+            g1Cards.forEach(c => c.element.classList.remove('is-flipped'));
+            await sleep(700);
+
+            setG1Status('洗牌中！請盯緊了！', 'blood-text');
+            await performG1Shuffle();
+            setupG1GuessPhase();
+        }
+
+        async function performG1Shuffle() {
+            const count = 10 + Math.floor(Math.random() * 5);
+            const baseSpeed = 300;
+            for (let i = 0; i < count; i++) {
+                let slotA = Math.floor(Math.random() * 3), slotB = Math.floor(Math.random() * 3);
+                while (slotA === slotB) slotB = Math.floor(Math.random() * 3);
+                let cardA = g1Cards.find(c => c.currentSlot === slotA), cardB = g1Cards.find(c => c.currentSlot === slotB);
+                cardA.currentSlot = slotB; cardB.currentSlot = slotA;
+                cardA.element.style.left = G1_POSITIONS[slotB];
+                cardB.element.style.left = G1_POSITIONS[slotA];
+                await sleep(i > count - 3 ? baseSpeed + 150 : baseSpeed);
+            }
+        }
+
+        function setupG1GuessPhase() {
+            g1TargetSlot = Math.floor(Math.random() * 3);
+            const target = g1Cards.find(c => c.currentSlot === g1TargetSlot);
+            target.element.classList.add('highlight-card');
+            setG1Status('發光的是哪一張卡牌？', 'blood-text');
+
+            const btnContainer = document.getElementById('guess-buttons');
+            btnContainer.innerHTML = '';
+            btnContainer.classList.remove('hidden'); btnContainer.classList.add('flex');
+
+            [...G1_TYPES].sort(() => Math.random() - 0.5).forEach(type => {
+                const btn = document.createElement('button');
+                btn.className = 'vintage-btn px-6 py-3 text-lg flex-1 min-w-[120px]';
+                btn.innerHTML = `是 ${type.name}`;
+                btn.onclick = () => handleG1Guess(type.id);
+                btnContainer.appendChild(btn);
+            });
+            isG1Animating = false;
+        }
+
+        async function handleG1Guess(guessedId) {
+            if (isG1Animating) return;
+            isG1Animating = true;
+            document.getElementById('guess-buttons').classList.add('hidden');
+
+            const target = g1Cards.find(c => c.currentSlot === g1TargetSlot);
+            target.element.classList.remove('highlight-card');
+            target.element.classList.add('is-flipped');
+            await sleep(350);
+
+            if (guessedId === target.type.id) {
+                setG1Status('太厲害了！你答對了！', 'text-[#1b4d24]');
+                target.element.classList.add('anim-success');
+            } else {
+                setG1Status(`猜錯囉！這是 ${target.type.name} 😢`, 'blood-text');
+                target.element.classList.add('anim-fail');
+                g1Cards.find(c => c.type.id === guessedId).element.classList.add('is-flipped');
+            }
+
+            await sleep(2000);
+            const btn = document.getElementById('btn-start-g1');
+            btn.innerText = '再玩一次';
+            btn.classList.remove('hidden');
+            isG1Animating = false;
+            btn.onclick = () => { initGame1(); startG1Sequence(); };
+        }
+
+        /* =========================================================================
+           Game 2: 魅大魅小
+           ========================================================================= */
+        const SUITS = ['♠', '♥', '♦', '♣'], RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+        let g2Deck = [], g2State = 0, p1Card = null, p2Card = null, g2Remaining = 52, isG2Animating = false;
+
+        function createDeck() {
+            let d = [];
+            for (let s of SUITS) for (let i=0; i<RANKS.length; i++) 
+                d.push({ suit: s, rank: RANKS[i], val: i+2, isRed: (s==='♥'||s==='♦'), drawn: false });
+            return d.sort(() => Math.random() - 0.5);
+        }
+
+        function getCardHTML(c) {
+            const clr = c.isRed ? 'red-suit' : 'black-suit';
+            return `<div class="poker-card-inner">
+                <div class="poker-back"></div>
+                <div class="poker-front">
+                    <div class="poker-corner ${clr}">${c.rank}<br>${c.suit}</div>
+                    <div class="poker-center ${clr}">${c.suit}</div>
+                    <div class="poker-corner bottom ${clr}">${c.rank}<br>${c.suit}</div>
+                </div>
+            </div>`;
+        }
+
+        function initGame2() {
+            g2Deck = createDeck(); g2Remaining = 52; g2State = 0; isG2Animating = false;
+            document.getElementById('g2-slot-1').innerHTML = `<div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>`;
+            document.getElementById('g2-slot-2').innerHTML = `<div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>`;
+            renderG2Pool();
+            setG2Status('請「前者」從下方牌堆抽一張牌', 'ink-text');
+            document.getElementById('g2-deck-count').innerText = g2Remaining;
+            document.getElementById('btn-reset-g2').classList.add('hidden');
+            document.getElementById('btn-next-g2').classList.add('hidden');
+        }
+
+        function setG2Status(text, clr) {
+            const el = document.getElementById('game2-status-text');
+            el.innerText = text; el.className = `text-xl md:text-2xl font-black tracking-wide transition-colors ${clr}`;
+        }
+
+        function renderG2Pool() {
+            const pool = document.getElementById('g2-card-pool'); pool.innerHTML = '';
+            g2Deck.forEach((c, i) => {
+                const el = document.createElement('div');
+                el.className = 'spread-card'; el.id = `pool-card-${i}`;
+                el.onclick = () => handleG2Click(i);
+                pool.appendChild(el);
+            });
+        }
+
+        async function handleG2Click(idx) {
+            if (isG2Animating || g2Deck[idx].drawn) return;
+            isG2Animating = true;
+            const card = g2Deck[idx], el = document.getElementById(`pool-card-${idx}`);
+            card.drawn = true; el.style.visibility = 'hidden'; el.style.opacity = '0';
+            g2Remaining--; document.getElementById('g2-deck-count').innerText = g2Remaining;
+
+            if (g2State === 0) {
+                p1Card = card;
+                const slot = document.getElementById('g2-slot-1');
+                slot.innerHTML = getCardHTML(p1Card);
+                setTimeout(() => slot.querySelector('.poker-card-inner').classList.add('is-flipped'), 50);
+                await sleep(600);
+                g2State = 1; setG2Status('請「後者」從下方牌堆抽一張牌', 'blood-text');
+                isG2Animating = false;
+            } else if (g2State === 1) {
+                p2Card = card;
+                const slot = document.getElementById('g2-slot-2');
+                slot.innerHTML = getCardHTML(p2Card);
+                setTimeout(() => slot.querySelector('.poker-card-inner').classList.add('is-flipped'), 50);
+                await sleep(700);
+                g2State = 2; evalG2();
+            }
+        }
+
+        function evalG2() {
+            let t = '', c = '';
+            if (p1Card.val > p2Card.val) { t = '前者獲勝！ 🏆'; c = 'text-[#1b4d24]'; }
+            else if (p2Card.val > p1Card.val) { t = '後者獲勝！ 🏆'; c = 'text-[#1b4d24]'; }
+            else { t = '平手！ 🤝'; c = 'ink-text'; }
+            
+            setG2Status(t, c);
+            
+            if (g2Remaining < 2) document.getElementById('btn-reset-g2').classList.remove('hidden');
+            else document.getElementById('btn-next-g2').classList.remove('hidden');
+            isG2Animating = false;
+        }
+
+        function nextRoundG2() {
+            document.getElementById('btn-next-g2').classList.add('hidden');
+            document.getElementById('g2-slot-1').innerHTML = `<div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>`;
+            document.getElementById('g2-slot-2').innerHTML = `<div class="w-full h-full border-2 border-dashed border-[#2b1a10] flex items-center justify-center text-[#2b1a10]/50 text-sm bg-black/5 font-bold">等待</div>`;
+            g2State = 0; p1Card = null; p2Card = null;
+            setG2Status('請「前者」從下方牌堆抽一張牌', 'ink-text');
+        }
+
+        /* =========================================================================
+           Game 3: 鬼才知道 (題庫與問答)
+           ========================================================================= */
+        const DEF_G3_Q = [
+            { q: "南瓜燈最早是用什麼雕刻的？", options: ["南瓜", "馬鈴薯或蘿蔔", "西瓜", "蘋果"], ans: 1 },
+            { q: "萬聖節（Halloween）是哪一天的節日？", options: ["10/31", "11/1", "11/31", "10/1"], ans: 0 },
+            { q: "礁溪老爺酒店位於台灣的哪一個縣市？", options: ["花蓮縣", "新北市", "宜蘭縣", "台東縣"], ans: 2 },
+            { q: "傳說中，吸血鬼最害怕什麼東西？", options: ["蘋果", "大蒜", "十字架與大蒜", "南瓜"], ans: 2 },
+            { q: "礁溪溫泉的泉質主要屬於哪一種？", options: ["硫磺泉", "碳酸氫鈉泉", "食鹽泉", "泥漿泉"], ans: 1 },
+            { q: "墨西哥紀念逝者的節日叫什麼？", options: ["亡靈節", "感恩節", "復活節", "清明節"], ans: 0 }
+        ];
+        let g3Questions = [], g3Cards = [], g3ToDraw = 2, g3Selected = [], g3Pending = [], g3Wrong = false, g3Correct = 0, isG3Anim = false;
+
+        function loadG3() {
+            try {
+                const s = localStorage.getItem('spooky_g3_q_v2');
+                g3Questions = s ? JSON.parse(s) : [...DEF_G3_Q];
+                if (!g3Questions.length) throw "e";
+            } catch(e) { g3Questions = [...DEF_G3_Q]; }
+        }
+
+        function initGame3() {
+            loadG3(); g3Cards = []; g3ToDraw = 2; g3Selected = []; g3Pending = []; g3Wrong = false; g3Correct = 0; isG3Anim = false;
+            document.getElementById('g3-qa-area').classList.add('hidden'); document.getElementById('g3-qa-area').classList.remove('flex');
+            document.getElementById('g3-end-area').classList.add('hidden'); document.getElementById('g3-end-area').classList.remove('flex');
+            const grid = document.getElementById('g3-card-grid');
+            grid.innerHTML = ''; grid.classList.remove('hidden');
+            let sq = [...g3Questions].sort(() => Math.random() - 0.5);
+
+            for(let i=0; i<9; i++) {
+                g3Cards.push({ idx: i, drawn: false, q: sq[i % sq.length] });
+                const el = document.createElement('div'); el.className = 'g3-card-container'; el.id = `g3-card-${i}`;
+                el.innerHTML = `<div class="g3-card-inner"><div class="g3-card-front"></div><div class="g3-card-back"><div class="text-3xl mb-1 text-[#2b1a10]">📜</div><div class="text-sm font-black text-[#2b1a10]">卷宗</div></div></div>`;
+                el.onclick = () => clickG3Card(i);
+                grid.appendChild(el);
+            }
+            setG3Status(`請抽取 ${g3ToDraw} 張卡片`);
+        }
+
+        function setG3Status(t, err=false) {
+            const el = document.getElementById('game3-status-text'); el.innerText = t;
+            el.className = `text-xl md:text-2xl font-black tracking-wide transition-colors ${err ? 'blood-text' : 'ink-text'}`;
+        }
+
+        async function clickG3Card(i) {
+            if (isG3Anim || g3Cards[i].drawn) return;
+            g3Cards[i].drawn = true; g3Selected.push(i);
+            document.querySelector(`#g3-card-${i} .g3-card-inner`).classList.add('is-flipped');
+            setG3Status(`已抽取 ${g3Selected.length} / ${g3ToDraw} 張`);
+
+            if (g3Selected.length === g3ToDraw) {
+                isG3Anim = true; await sleep(700);
+                g3Selected.forEach(idx => { g3Pending.push(g3Cards[idx].q); document.getElementById(`g3-card-${idx}`).classList.add('g3-card-drawn'); });
+                g3Selected = [];
+                document.getElementById('g3-card-grid').classList.add('hidden');
+                document.getElementById('g3-qa-area').classList.remove('hidden'); document.getElementById('g3-qa-area').classList.add('flex');
+                setG3Status('請回答卷宗上的問題'); processG3Q();
+            }
+        }
+
+        function processG3Q() {
+            if (!g3Pending.length) return endG3Round();
+            isG3Anim = false; const cq = g3Pending[0];
+            document.getElementById('g3-q-counter').innerText = g3Correct + 1;
+            document.getElementById('g3-q-text').innerText = cq.q;
+            const optDiv = document.getElementById('g3-options'); optDiv.innerHTML = '';
+            document.getElementById('g3-qa-result').classList.add('hidden'); document.getElementById('g3-next-btn').classList.add('hidden');
+
+            cq.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                const numStr = ["壹", "貳", "參", "肆"][i];
+                /* 加入 items-start 與 break-words 解決長文字破版問題 */
+                btn.className = 'px-3 py-3 md:px-4 bg-[#c09e7c] border-2 border-[#2b1a10] text-left text-[#2b1a10] font-bold transition hover:bg-[#a68460] flex items-start gap-2 md:gap-3 leading-snug w-full break-words';
+                btn.innerHTML = `<span class="blood-text font-black whitespace-nowrap">${numStr}.</span> <span>${opt}</span>`;
+                btn.onclick = () => ansG3(i, cq, btn);
+                optDiv.appendChild(btn);
+            });
+        }
+
+        function ansG3(sIdx, qData, btn) {
+            if (isG3Anim) return; isG3Anim = true;
+            const isCor = (sIdx === qData.ans);
+            const res = document.getElementById('g3-qa-result'); res.classList.remove('hidden');
+            const btns = document.getElementById('g3-options').querySelectorAll('button');
+            btns.forEach(b => { b.disabled = true; b.className = 'px-4 py-3 bg-[#c09e7c] border-2 border-[#2b1a10] text-left opacity-60 cursor-not-allowed flex items-center gap-3 font-bold'; });
+
+            if (isCor) {
+                g3Correct++; 
+                btn.className = 'px-4 py-3 bg-[#1b4d24] border-2 border-[#0f2e15] text-[#dcbfa6] text-left font-bold opacity-100 flex items-center gap-3';
+                btn.querySelector('span').className = 'text-white font-black';
+                res.innerText = "答對了！"; 
+                res.className = 'mt-6 text-xl font-black text-center w-full p-4 border-2 border-[#1b4d24] bg-[#1b4d24]/20 text-[#1b4d24]';
+            } else {
+                g3Wrong = true; 
+                btn.className = 'px-4 py-3 bg-[#8b0000] border-2 border-[#4a0000] text-[#dcbfa6] text-left font-bold opacity-100 flex items-center gap-3';
+                btn.querySelector('span').className = 'text-white font-black';
+                btns[qData.ans].className = 'px-4 py-3 bg-[#1b4d24] border-2 border-[#0f2e15] text-[#dcbfa6] text-left font-bold opacity-100 flex items-center gap-3';
+                btns[qData.ans].querySelector('span').className = 'text-white font-black';
+                res.innerHTML = `答錯了！<br><span class="text-sm font-bold mt-2 block ink-text">正確答案: ${qData.options[qData.ans]}</span>`;
+                res.className = 'mt-6 text-xl font-black text-center w-full p-4 border-2 border-[#8b0000] bg-[#8b0000]/10 blood-text';
+            }
+            document.getElementById('g3-next-btn').classList.remove('hidden');
+        }
+
+        function nextG3Step() { g3Pending.shift(); processG3Q(); }
+
+        function endG3Round() {
+            document.getElementById('g3-qa-area').classList.add('hidden'); document.getElementById('g3-qa-area').classList.remove('flex');
+            const left = g3Cards.filter(c => !c.drawn).length;
+            if (g3Wrong) {
+                if (left > 0) {
+                    document.getElementById('g3-card-grid').classList.remove('hidden');
+                    g3ToDraw = 1; g3Wrong = false; setG3Status('答錯懲罰，請再抽 1 張！', true); isG3Anim = false;
+                } else {
+                    setG3Status('卷宗耗盡！', true);
+                    const e = document.getElementById('g3-end-area'); e.classList.remove('hidden'); e.classList.add('flex');
+                    e.querySelector('h3').innerText = '挑戰失敗 👻'; e.querySelector('h3').className = 'text-3xl font-black blood-text';
+                    e.querySelector('p').innerText = '無牌可抽，下次再努力！';
+                }
+            } else {
+                setG3Status('完美通關！');
+                const e = document.getElementById('g3-end-area'); e.classList.remove('hidden'); e.classList.add('flex');
+                e.querySelector('h3').innerText = '恭喜過關！ 🎉'; e.querySelector('h3').className = 'text-3xl font-black text-[#1b4d24]';
+                e.querySelector('p').innerText = `你總共答對了 ${g3Correct} 題！`;
+            }
+        }
+
+        /* 題庫管理 (Admin) */
+        function openG3Auth() { document.getElementById('g3-pwd-input').value = ''; document.getElementById('g3-auth-error').innerText = ''; document.getElementById('g3-auth-modal').classList.remove('hidden'); document.getElementById('g3-auth-modal').classList.add('flex'); }
+        function closeG3Auth() { document.getElementById('g3-auth-modal').classList.add('hidden'); document.getElementById('g3-auth-modal').classList.remove('flex'); }
+        function verifyG3Auth() { if(document.getElementById('g3-pwd-input').value === '8888') { closeG3Auth(); openG3Edit(); } else document.getElementById('g3-auth-error').innerText = '密碼錯誤！'; }
+        function openG3Edit() { loadG3(); renderG3Edit(); document.getElementById('g3-edit-modal').classList.remove('hidden'); document.getElementById('g3-edit-modal').classList.add('flex'); }
+        function closeG3Edit() { document.getElementById('g3-edit-modal').classList.add('hidden'); document.getElementById('g3-edit-modal').classList.remove('flex'); initGame3(); }
+        
+        function renderG3Edit() {
+            document.getElementById('g3-q-count-display').innerText = g3Questions.length;
+            const l = document.getElementById('g3-q-list'); l.innerHTML = '';
+            g3Questions.forEach((q, i) => {
+                const d = document.createElement('div'); d.className = 'bg-[#dcbfa6] border-2 border-[#2b1a10] p-3 flex justify-between items-start gap-4';
+                d.innerHTML = `<div class="flex-1"><div class="ink-text font-black text-sm mb-1">${i+1}. ${q.q}</div><div class="blood-text text-xs font-bold">正解: ${q.options[q.ans]}</div></div><button onclick="delG3Q(${i})" class="text-[#dcbfa6] bg-[#2b1a10] px-3 py-1.5 text-xs font-bold transition hover:bg-[#8b0000]">銷毀</button>`;
+                l.appendChild(d);
+            });
+        }
+        function delG3Q(i) { if(g3Questions.length<=1) return alert("卷宗最少保留1題"); g3Questions.splice(i,1); localStorage.setItem('spooky_g3_q_v2', JSON.stringify(g3Questions)); renderG3Edit(); }
+        function addG3Question() {
+            const q=document.getElementById('g3-new-q').value.trim(), o0=document.getElementById('g3-new-opt0').value.trim(), o1=document.getElementById('g3-new-opt1').value.trim(), o2=document.getElementById('g3-new-opt2').value.trim(), o3=document.getElementById('g3-new-opt3').value.trim(), ans=document.getElementById('g3-new-ans').value;
+            if(!q||!o0||!o1||!o2||!o3) return alert("請填寫完整卷宗資料");
+            g3Questions.push({q:q, options:[o0,o1,o2,o3], ans:parseInt(ans)});
+            localStorage.setItem('spooky_g3_q_v2', JSON.stringify(g3Questions));
+            ['q','opt0','opt1','opt2','opt3'].forEach(id=>document.getElementById(`g3-new-${id}`).value=''); document.getElementById('g3-new-ans').value='0';
+            renderG3Edit(); document.querySelector('.q-list-container').scrollTop = document.querySelector('.q-list-container').scrollHeight;
+        }
+
+        /* =========================================================================
+           Game 4: 魔仿鬼
+           ========================================================================= */
+        const G4_PHOTOS = [
+            { src: encodeURI('模仿照片1.jpg'), name: '搞怪表情 1' },
+            { src: encodeURI('模仿照片2.jpg'), name: '恐怖鬼臉 2' },
+            { src: encodeURI('模仿照片3.jpg'), name: '殭屍動作 3' }
+        ];
+        let isG4Anim = false;
+
+        function initGame4() {
+            isG4Anim = false;
+            document.getElementById('g4-card-inner').classList.remove('is-flipped', 'g4-shuffle-anim');
+            document.getElementById('btn-start-g4').classList.remove('hidden');
+            document.getElementById('btn-start-g4').innerText = '開始洗牌與抽取';
+            document.getElementById('game4-status-text').innerText = '準備好模仿了嗎？';
+            document.getElementById('game4-status-text').className = 'text-xl md:text-2xl font-black ink-text tracking-wide';
+        }
+
+        async function startG4Sequence() {
+            if (isG4Anim) return; isG4Anim = true;
+            const btn = document.getElementById('btn-start-g4'), st = document.getElementById('game4-status-text'), inr = document.getElementById('g4-card-inner');
+            btn.classList.add('hidden'); 
+            st.innerText = '洗牌中...！'; st.className = 'text-xl md:text-2xl font-black blood-text tracking-wide';
+            if (inr.classList.contains('is-flipped')) { inr.classList.remove('is-flipped'); await sleep(500); }
+            
+            inr.classList.add('g4-shuffle-anim'); await sleep(1000); inr.classList.remove('g4-shuffle-anim');
+            
+            const p = G4_PHOTOS[Math.floor(Math.random() * G4_PHOTOS.length)];
+            const img = document.getElementById('g4-photo'), fb = document.getElementById('g4-photo-fallback');
+            img.src = p.src;
+            img.onerror = () => { img.classList.add('hidden'); fb.classList.remove('hidden'); fb.classList.add('flex'); document.getElementById('g4-photo-name').innerText = p.name; };
+            img.onload = () => { img.classList.remove('hidden'); fb.classList.add('hidden'); fb.classList.remove('flex'); };
+
+            st.innerText = '請模仿這個！📸'; st.className = 'text-xl md:text-2xl font-black ink-text tracking-wide';
+            inr.classList.add('is-flipped');
+            btn.innerText = '換人！再抽一次'; btn.classList.remove('hidden'); isG4Anim = false;
+        }
+
+        // 預設進入主選單
+        switchView('menu-view');
+    </script>
+</body>
+</html>
